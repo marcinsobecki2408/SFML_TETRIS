@@ -10,7 +10,7 @@
 
 using namespace sf;
 
-int main()
+int main(int argc, char* argv[])
 {
 	// Initialization
 	const int heightWithBorder = 25;
@@ -30,8 +30,9 @@ int main()
 	GameFieldManager gameFieldManager(widthWithBorder, heightWithBorder, offset);
 	int* gameField = gameFieldManager.getGameField();
 
+	// Creation of current and next tetromino
 	Tetromino* tetromino = new Tetromino(offset, gameField, widthWithBorder);
-	Tetromino* nextTetromino = new Tetromino(tetromino->getCurrentTetrominoIndex(), offset, gameField, widthWithBorder);
+	Tetromino* nextTetromino = new Tetromino(tetromino->getCurrentTetrominoIndex(), offset, gameField, widthWithBorder);	// Ensures, that generated tetrominoes are different
 	nextTetromino->makeNewPiece();
 	// Flags
 	bool rotate = false,
@@ -42,6 +43,14 @@ int main()
 		pauseGame = false,
 		resetGame = false,
 		turboModeOn = false;
+
+	if (argv[1] != nullptr)
+	{
+		if (strcmp(argv[1], "t") == 0)
+			turboModeOn = true;
+		else
+			turboModeOn = false;
+	}
 
 	// Window render
 	RenderWindow window(VideoMode(550, 21 * 19), "Tetris Marcinka");
@@ -182,10 +191,10 @@ int main()
 						moveRight = false;
 					}
 
-					if (Keyboard::isKeyPressed(Keyboard::Down) && !turboModeOn)
-						timestep = 0.05;
-					else if (Keyboard::isKeyPressed(Keyboard::Down) && turboModeOn)
+					if (Keyboard::isKeyPressed(Keyboard::Down) && turboModeOn)
 						timestep = 0.002;
+					else if (Keyboard::isKeyPressed(Keyboard::Down) && !turboModeOn)
+						timestep = 0.05;
 					else
 						timestep = 0.3;
 
@@ -258,7 +267,7 @@ int main()
 		scoreLabel.setString("Score: " + std::to_string(currentPoints));
 		window.draw(scoreLabel);
 		String turboModeLabel = turboModeOn ? String("ON") : String("OFF");
-		controlsLabels.setString("R - Restart\nP - Pause\nT - Turbo Mode: " + turboModeLabel);
+		controlsLabels.setString("R - Restart\nP - Pause\nTurbo Mode: " + turboModeLabel);
 		window.draw(controlsLabels);
 
 		// Drawing window where next piece is displayed
