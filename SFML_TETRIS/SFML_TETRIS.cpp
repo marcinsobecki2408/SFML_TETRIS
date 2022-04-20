@@ -204,8 +204,7 @@ int main(int argc, char* argv[])
 						if (collisionOccured)
 						{
 							std::swap(tetromino, nextTetromino);
-							nextTetromino->setCurrentTetrominoIndex(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
-							nextTetromino->makeNewPiece();
+							nextTetromino->makeNewNextPiece(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
 
 							// Checking for completed lines
 							linesCleared = gameFieldManager.checkForFullLines();
@@ -225,8 +224,7 @@ int main(int argc, char* argv[])
 				resetGame = false;
 				pauseGame = false;
 				tetromino->makeNewPiece();
-				nextTetromino->setCurrentTetrominoIndex(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
-				nextTetromino->makeNewPiece();
+				nextTetromino->makeNewNextPiece(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
 				gameFieldManager.clearGameField();
 				currentPoints = 0;
 			}
@@ -242,8 +240,7 @@ int main(int argc, char* argv[])
 				resetGame = false;
 				pauseGame = false;
 				tetromino->makeNewPiece();
-				nextTetromino->setCurrentTetrominoIndex(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
-				nextTetromino->makeNewPiece();
+				nextTetromino->makeNewNextPiece(tetromino->getCurrentTetrominoIndex());	// This is made to ensure that there are no two same pieces in the row
 				gameFieldManager.clearGameField();
 				currentPoints = 0;
 			}

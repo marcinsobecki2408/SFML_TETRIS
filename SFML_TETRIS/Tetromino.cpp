@@ -66,6 +66,12 @@ void Tetromino::makeNewPiece()
 	currentTetrominoIndex = newTetrominoIndex;
 }
 
+void Tetromino::makeNewNextPiece(int currentTetrominoIndex)
+{
+	this->currentTetrominoIndex = currentTetrominoIndex;
+	makeNewPiece();
+}
+
 void Tetromino::rotate()
 {
 	Point pivot = coordinatesInTile[2];		// Pivot point which te tetromino will be rotated around
@@ -166,11 +172,6 @@ Point* Tetromino::getCoordinatesInTile()
 int Tetromino::getCurrentTetrominoIndex()
 {
 	return currentTetrominoIndex;
-}
-
-void Tetromino::setCurrentTetrominoIndex(int index)
-{
-	this->currentTetrominoIndex = index;
 }
 
 int Tetromino::getTetrominoTileSide()

@@ -66,6 +66,7 @@ public:
 	~Tetromino();
 	void setCurrentPiece(int index);
 	void makeNewPiece();
+	void makeNewNextPiece(int currentTetrominoIndex);
 	void rotate();
 	void moveLeft();
 	void moveRight();
@@ -73,7 +74,6 @@ public:
 
 	Point* getCoordinatesInTile();
 	int getCurrentTetrominoIndex();
-	void setCurrentTetrominoIndex(int index);
 	int getTetrominoTileSide();
 	void setWidthWithBorder(int widthWithBorder);
 	void setGameField(int* gameField);
