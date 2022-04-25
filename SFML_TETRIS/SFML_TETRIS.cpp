@@ -124,14 +124,12 @@ int main(int argc, char* argv[])
 			1024 * 16,
 			NMPWAIT_USE_DEFAULT_WAIT,
 			NULL);
-		// Get message from pipe client
+
 		if (hPipe != INVALID_HANDLE_VALUE)
-		{
 			ConnectNamedPipe(hPipe, NULL);   // wait for someone to connect to the pipe
-		}
 	}
 
-	DWORD total_available_bytes;
+	DWORD totalAvailableBytes;
 
 	// Main loop of the program
 	Event event;
@@ -144,13 +142,14 @@ int main(int argc, char* argv[])
 				0,
 				0,
 				0,
-				&total_available_bytes,
+				&totalAvailableBytes,
 				0))
 			{
-				// Handle failure. (Me)
+				// Handle failure
+				std::cerr << "Error while trying to peek the pipe.\n";
 			}
 			// If there is some data, read it
-			else if (total_available_bytes > 0)
+			else if (totalAvailableBytes > 0)
 			{
 				if (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE)
 				{
@@ -178,7 +177,7 @@ int main(int argc, char* argv[])
 					border.setPosition(i * 19, (j - 4) * 19);
 					window.draw(border);
 				}
-				if (gameField[widthWithBorder * j + i] >= 0 && gameField[widthWithBorder * j + i] <= 6)
+				else if (gameField[widthWithBorder * j + i] >= 0 && gameField[widthWithBorder * j + i] <= 6)
 				{
 					blockSprite.setPosition(i * 19, (j - 4) * 19);
 					blockSprite.setTextureRect(IntRect(gameField[widthWithBorder * j + i] * 19, 0, 19, 19));
@@ -256,14 +255,12 @@ int main(int argc, char* argv[])
 						tetromino->rotate();
 						rotate = false;
 					}
-
-					if (moveLeft)
+					else if (moveLeft)
 					{
 						tetromino->moveLeft();
 						moveLeft = false;
 					}
-
-					if (moveRight)
+					else if (moveRight)
 					{
 						tetromino->moveRight();
 						moveRight = false;
