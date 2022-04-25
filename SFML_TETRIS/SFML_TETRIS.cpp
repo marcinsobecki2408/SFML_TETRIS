@@ -1,10 +1,9 @@
 ﻿#include <SFML/Graphics.hpp>
 #include <iostream>
-#include <ctime>
 #include <random>
 #include <algorithm>
+#include <cstring>
 #include "Structures.h"
-#include "Generator.h"
 #include "Tetromino.h"
 #include "GameFieldManager.h"
 
@@ -90,8 +89,10 @@ int main(int argc, char* argv[])
 	if (!font.loadFromFile("Fonts/arial.ttf"))
 	{
 		std::cout << "Cannot read font" << std::endl;
+#ifdef _WIN32 || _WIN64
 		system("pause");
-		return 1;
+#endif
+        return 1;
 	}
 
 	Text scoreLabel;
