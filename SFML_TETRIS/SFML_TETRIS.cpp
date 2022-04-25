@@ -8,6 +8,12 @@
 #include "Tetromino.h"
 #include "GameFieldManager.h"
 
+// Pipe includes
+#include <windows.h> 
+#include <stdio.h>
+#include <conio.h>
+#include <tchar.h>
+
 using namespace sf;
 
 int main(int argc, char* argv[])
@@ -42,14 +48,18 @@ int main(int argc, char* argv[])
 		gameOver = false,
 		pauseGame = false,
 		resetGame = false,
-		turboModeOn = false;
+		turboModeOn = false,
+		usePipes = false;
 
-	if (argv[1] != nullptr)
+	// Parameter handling
+	std::vector<std::string> args(argv, argv + argc);
+	if (std::find(begin(args), end(args), "t") != end(args))
 	{
-		if (strcmp(argv[1], "t") == 0)
-			turboModeOn = true;
-		else
-			turboModeOn = false;
+		turboModeOn = true;
+	}
+	if (std::find(begin(args), end(args), "p") != end(args))
+	{
+		usePipes = true;
 	}
 
 	// Window render
@@ -96,10 +106,60 @@ int main(int argc, char* argv[])
 	controlsLabels.setCharacterSize(24);
 	controlsLabels.setFillColor(Color::Black);
 
+	// Pipe server to recieve messages
+	HANDLE hPipe = NULL;
+	char buffer[1024];
+	DWORD dwRead;
+	std::string recievedMessage = "";
+
+	// If pipes are used, create one and wait for the client to connect
+	if (usePipes)
+	{
+		hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\TetrisPipe"),
+			PIPE_ACCESS_DUPLEX,
+			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
+			1,
+			1024 * 16,
+			1024 * 16,
+			NMPWAIT_USE_DEFAULT_WAIT,
+			NULL);
+		// Get message from pipe client
+		if (hPipe != INVALID_HANDLE_VALUE)
+		{
+			ConnectNamedPipe(hPipe, NULL);   // wait for someone to connect to the pipe
+		}
+	}
+
+	DWORD total_available_bytes;
+
 	// Main loop of the program
 	Event event;
 	while (window.isOpen())
 	{
+		// If pipes are used - check if there is any data to read
+		if (usePipes)
+		{
+			if (FALSE == PeekNamedPipe(hPipe,
+				0,
+				0,
+				0,
+				&total_available_bytes,
+				0))
+			{
+				// Handle failure. (Me)
+			}
+			// If there is some data, read it
+			else if (total_available_bytes > 0)
+			{
+				if (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE)
+				{
+					recievedMessage = std::string(buffer);
+					if (recievedMessage.size() > 1)
+						recievedMessage.pop_back();
+				}
+			}
+		}
+			
 		// Time mesurement
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
@@ -166,6 +226,23 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		if (!recievedMessage.empty())
+		{
+			if (recievedMessage.compare("w") == 0)
+			{
+				rotate = true;
+			}
+			else if (recievedMessage.compare("a") == 0)
+			{
+				moveLeft = true;
+			}
+			else if (recievedMessage.compare("d") == 0)
+			{
+				moveRight = true;
+			}
+			recievedMessage.clear();
+		}
+
 		// Game logic based on flags set
 		if (!gameOver)
 		{
@@ -229,9 +306,13 @@ int main(int argc, char* argv[])
 				currentPoints = 0;
 			}
 			
-			currentPoints += (linesCleared * linesCleared) * 100;	// Additional points for completing more lines in one move
-			linesCleared = 0; // Reset number of cleared lines to 0 for the next game tick
+			if (linesCleared != 0)
+			{
+				currentPoints += (linesCleared * linesCleared) * 100;	// Additional points for completing more lines in one move
+				linesCleared = 0; // Reset number of cleared lines to 0 for the next game tick
+			}
 		}
+
 		else	// In case of game over, special information is displayed
 		{
 			if (resetGame)
@@ -301,6 +382,9 @@ int main(int argc, char* argv[])
 
 		window.display();
 	}
+
+	// Pipe shutdown
+	DisconnectNamedPipe(hPipe);
 
 	// Cleaning up
 	delete offset;
