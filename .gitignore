@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 SFML_TETRIS/cmake-build*
 SFML_TETRIS/.idea
+.idea

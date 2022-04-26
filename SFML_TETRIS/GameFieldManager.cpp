@@ -1,11 +1,11 @@
+#include <cassert>
 #include "GameFieldManager.h"
-#include <iostream>
 
-GameFieldManager::GameFieldManager(int widthWithBorder, int heightWithBorder, Point* offset)
+GameFieldManager::GameFieldManager(const int widthWithBorder, const int heightWithBorder, Point* offset) :
+widthWithBorder(widthWithBorder),
+heightWithBorder(heightWithBorder),
+offset(offset)
 {
-	this->widthWithBorder = widthWithBorder;
-	this->heightWithBorder = heightWithBorder;
-	this->offset = offset;
 	gameField = new int[heightWithBorder * widthWithBorder];
 	for (int i = 0; i < heightWithBorder; i++)
 		for (int j = 0; j < widthWithBorder; j++)
@@ -25,6 +25,17 @@ void GameFieldManager::setOffset(Point* offset)
 int* GameFieldManager::getGameField()
 {
 	return gameField;
+}
+
+void GameFieldManager::createGameFieldExport(char* buf)
+{
+    const int gameFieldSize = this->widthWithBorder * this->heightWithBorder;
+    int j = 0;
+    for(int i = 0; i < gameFieldSize; i++) {
+        int piece = this->gameField[i];
+        if(piece == 9) continue;
+        buf[j++] = piece == 8 ? 0 : 1;
+    }
 }
 
 bool GameFieldManager::checkIfGameOver()

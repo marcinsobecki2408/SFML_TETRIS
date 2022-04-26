@@ -14,7 +14,8 @@ add_executable(SFML_TETRIS
     Structures.h
     Tetromino.cpp
     Tetromino.h
-)
+    connector.cpp
+    connector.h)
 
 target_link_libraries(SFML_TETRIS
     sfml-graphics
