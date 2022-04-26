@@ -2,18 +2,15 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
-#include <cstring>
 #include "Structures.h"
 #include "Tetromino.h"
 #include "GameFieldManager.h"
-
-// Pipe includes
-#include <windows.h> 
-#include <stdio.h>
-#include <conio.h>
-#include <tchar.h>
+#include "connector.h"
 
 using namespace sf;
+
+using std::cout;
+using std::endl;
 
 int main(int argc, char* argv[])
 {
@@ -51,7 +48,7 @@ int main(int argc, char* argv[])
 		usePipes = false;
 
 	// Parameter handling
-	std::vector<std::string> args(argv, argv + argc);
+	std::vector<string> args(argv, argv + argc);
 	if (std::find(begin(args), end(args), "t") != end(args))
 	{
 		turboModeOn = true;
@@ -88,7 +85,7 @@ int main(int argc, char* argv[])
 	Font font;
 	if (!font.loadFromFile("Fonts/arial.ttf"))
 	{
-		std::cout << "Cannot read font" << std::endl;
+		cout << "Cannot read font" << endl;
 #ifdef _WIN32 || _WIN64
 		system("pause");
 #endif
@@ -107,57 +104,32 @@ int main(int argc, char* argv[])
 	controlsLabels.setCharacterSize(24);
 	controlsLabels.setFillColor(Color::Black);
 
-	// Pipe server to recieve messages
-	HANDLE hPipe = NULL;
-	char buffer[1024];
-	DWORD dwRead;
-	std::string recievedMessage = "";
+    connector* inCon = nullptr;
+    connector* outCon = nullptr;
+    string msg;
+    if (usePipes) {
+        inCon = new connector("/tmp/biai_input");
+        outCon = new connector("/tmp/biai_output");
+        inCon->clear();
+        outCon->clear();
+    }
 
-	// If pipes are used, create one and wait for the client to connect
-	if (usePipes)
-	{
-		hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\TetrisPipe"),
-			PIPE_ACCESS_DUPLEX,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
-			1,
-			1024 * 16,
-			1024 * 16,
-			NMPWAIT_USE_DEFAULT_WAIT,
-			NULL);
-
-		if (hPipe != INVALID_HANDLE_VALUE)
-			ConnectNamedPipe(hPipe, NULL);   // wait for someone to connect to the pipe
-	}
-
-	DWORD totalAvailableBytes;
+    // [gameField..., currentPiece, nextPiece]
+    const int GSE_SIZE = 10*24+2;
+    char gameStateExport[GSE_SIZE];
 
 	// Main loop of the program
 	Event event;
 	while (window.isOpen())
 	{
-		// If pipes are used - check if there is any data to read
 		if (usePipes)
 		{
-			if (FALSE == PeekNamedPipe(hPipe,
-				0,
-				0,
-				0,
-				&totalAvailableBytes,
-				0))
-			{
-				// Handle failure
-				std::cerr << "Error while trying to peek the pipe.\n";
-			}
-			// If there is some data, read it
-			else if (totalAvailableBytes > 0)
-			{
-				if (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE)
-				{
-					recievedMessage = std::string(buffer);
-					if (recievedMessage.size() > 1)
-						recievedMessage.pop_back();
-				}
-			}
+            gameFieldManager.createGameFieldExport(gameStateExport);
+            gameStateExport[GSE_SIZE - 2] = (char) tetromino->getCurrentTetrominoIndex();
+            gameStateExport[GSE_SIZE - 1] = (char) nextTetromino->getCurrentTetrominoIndex();
+            outCon->write(gameStateExport, GSE_SIZE);
+
+            msg = inCon->read();
 		}
 			
 		// Time mesurement
@@ -226,21 +198,21 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		if (!recievedMessage.empty())
+		if (!msg.empty())
 		{
-			if (recievedMessage.compare("w") == 0)
+			if (msg == "w")
 			{
 				rotate = true;
 			}
-			else if (recievedMessage.compare("a") == 0)
+			else if (msg == "a")
 			{
 				moveLeft = true;
 			}
-			else if (recievedMessage.compare("d") == 0)
+			else if (msg == "d")
 			{
 				moveRight = true;
 			}
-			recievedMessage.clear();
+            msg.clear();
 		}
 
 		// Game logic based on flags set
@@ -273,7 +245,7 @@ int main(int argc, char* argv[])
 					else
 						timestep = 0.3;
 
-					if (timer > timestep)
+					if (timer > timestep || usePipes)
 					{
 						bool collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
 						if (collisionOccured)
@@ -381,12 +353,15 @@ int main(int argc, char* argv[])
 		window.display();
 	}
 
-	// Pipe shutdown
-	DisconnectNamedPipe(hPipe);
-
 	// Cleaning up
 	delete offset;
 	delete tetromino;
 	delete nextTetromino;
+
+    if(inCon)
+        delete inCon;
+    if(outCon)
+        delete outCon;
+
 	return 0;
 }
