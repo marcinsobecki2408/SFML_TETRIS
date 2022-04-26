@@ -13,19 +13,19 @@ using std::string;
 #include <conio.h>
 #include <tchar.h>
 
-
 class connector {
     HANDLE hPipe = NULL;
     char buffer[BUF_SIZE];
     DWORD dwRead;
-    string recievedMessage = "";
-    DWORD total_available_bytes;
+    DWORD dwWritten;
+    string recievedMessage;
+    DWORD totalAvailableBytes;
 
 public:
-    connector();
+    connector(string name);
     ~connector();
     string read();
-    void write(string str);
+    void write(char* buf, int size);
     void clear();
 
 };

@@ -2,10 +2,11 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
-#include "Structures.h"
+#include "Point.h"
 #include "Tetromino.h"
 #include "GameFieldManager.h"
 #include "connector.h"
+#include "Checkpoint.h"
 
 using namespace sf;
 
@@ -36,16 +37,22 @@ int main(int argc, char* argv[])
 	Tetromino* tetromino = new Tetromino(offset, gameField, widthWithBorder);
 	Tetromino* nextTetromino = new Tetromino(tetromino->getCurrentTetrominoIndex(), offset, gameField, widthWithBorder);	// Ensures, that generated tetrominoes are different
 	nextTetromino->makeNewPiece();
+
+	// Make checkpoint
+	Checkpoint* checkpoint = new Checkpoint(offset, gameField, heightWithBorder * widthWithBorder, tetromino->getCurrentTetrominoIndex(), nextTetromino->getCurrentTetrominoIndex());
+
 	// Flags
 	bool rotate = false,
 		moveLeft = false,
 		moveRight = false,
-		moveDown = false,
+		hardDrop = false,
 		gameOver = false,
 		pauseGame = false,
 		resetGame = false,
 		turboModeOn = false,
-		usePipes = false;
+		usePipes = false,
+		makeCheckpoint = false,
+		restoreCheckpoint = false;
 
 	// Parameter handling
 	std::vector<string> args(argv, argv + argc);
@@ -167,33 +174,39 @@ int main(int argc, char* argv[])
 			}
 			if (event.type == Event::KeyPressed)
 			{
-				if (event.key.code == Keyboard::R)
+				switch (event.key.code)
 				{
+				case Keyboard::R:
 					resetGame = true;
-				}
-				else if (event.key.code == Keyboard::Up)
-				{
+					break;
+				case Keyboard::Up:
 					rotate = true;
-				}
-				else if (event.key.code == Keyboard::Left)
-				{
+					break;
+				case Keyboard::Left:
 					moveLeft = true;
-				}
-				else if (event.key.code == Keyboard::Right)
-				{
+					break;
+				case Keyboard::Right:
 					moveRight = true;
-				}
-				else if (event.key.code == Keyboard::P)
-				{
+					break;
+				case Keyboard::Q:
+					hardDrop = true;
+					break;
+				case Keyboard::P:
 					pauseGame = !pauseGame;
 					rotate = false;
-					moveDown = false;
 					moveLeft = false;
 					moveRight = false;
-				}
-				else if (event.key.code == Keyboard::T)
-				{
+					hardDrop = false;
+					break;
+				case Keyboard::T:
 					turboModeOn = !turboModeOn;
+					break;
+				case Keyboard::C:
+					makeCheckpoint = true;
+					break;
+				case Keyboard::V:
+					restoreCheckpoint = true;
+					break;
 				}
 			}
 		}
@@ -211,6 +224,10 @@ int main(int argc, char* argv[])
 			else if (msg == "d")
 			{
 				moveRight = true;
+			}
+			else if (msg == "q")
+			{
+				hardDrop = true;
 			}
             msg.clear();
 		}
@@ -237,6 +254,16 @@ int main(int argc, char* argv[])
 						tetromino->moveRight();
 						moveRight = false;
 					}
+					else if (makeCheckpoint)
+					{
+						checkpoint->save(offset, gameField, tetromino->getCurrentTetrominoIndex(), nextTetromino->getCurrentTetrominoIndex(), currentPoints);
+						makeCheckpoint = false;
+					}
+					else if (restoreCheckpoint)
+					{
+						checkpoint->restore(offset, gameField, tetromino, nextTetromino, currentPoints);
+						restoreCheckpoint = false;
+					}
 
 					if (Keyboard::isKeyPressed(Keyboard::Down) && turboModeOn)
 						timestep = 0.002;
@@ -247,7 +274,14 @@ int main(int argc, char* argv[])
 
 					if (timer > timestep || usePipes)
 					{
-						bool collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
+						bool collisionOccured;
+						do
+						{
+							collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
+							if (collisionOccured)
+								hardDrop = false;
+						} while (hardDrop);
+
 						if (collisionOccured)
 						{
 							std::swap(tetromino, nextTetromino);
@@ -357,6 +391,7 @@ int main(int argc, char* argv[])
 	delete offset;
 	delete tetromino;
 	delete nextTetromino;
+	delete checkpoint;
 
     if(inCon)
         delete inCon;

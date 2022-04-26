@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SFML_TETRIS_GENERATOR_H
+#define SFML_TETRIS_GENERATOR_H
+
 #include <random>
 class Generator
 {
@@ -12,3 +14,4 @@ public:
 	int generate();
 };
 
+#endif

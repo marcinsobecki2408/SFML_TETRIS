@@ -1,5 +1,7 @@
-#pragma once
-#include "Structures.h"
+#ifndef SFML_TETRIS_TETROMINO_H
+#define SFML_TETRIS_TETROMINO_H
+
+#include "Point.h"
 #include "Generator.h"
 
 class Tetromino
@@ -80,3 +82,4 @@ public:
 	void setOffset(Point* offset);
 };
 
+#endif

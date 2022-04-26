@@ -1,5 +1,7 @@
-#pragma once
-#include "Structures.h"
+#ifndef SFML_TETRIS_GAME_FIELD_MANAGER_H
+#define SFML_TETRIS_GAME_FIELD_MANAGER_H
+
+#include "Point.h"
 
 #include <iostream>
 #include <string>
@@ -25,3 +27,4 @@ public:
 	void clearGameField();
 };
 
+#endif

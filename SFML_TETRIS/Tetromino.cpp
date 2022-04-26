@@ -141,7 +141,6 @@ void Tetromino::moveRight()
 bool Tetromino::moveDown()
 {
 	int controlSum = 0;
-	bool collisionOccured;
 	Point globalCoordinates;
 	for (int i = 0; i < tetrominoTileSide; i++)
 	{

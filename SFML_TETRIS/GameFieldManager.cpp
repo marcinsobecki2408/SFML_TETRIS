@@ -2,9 +2,9 @@
 #include "GameFieldManager.h"
 
 GameFieldManager::GameFieldManager(const int widthWithBorder, const int heightWithBorder, Point* offset) :
-widthWithBorder(widthWithBorder),
-heightWithBorder(heightWithBorder),
-offset(offset)
+	widthWithBorder(widthWithBorder),
+	heightWithBorder(heightWithBorder),
+	offset(offset)
 {
 	gameField = new int[heightWithBorder * widthWithBorder];
 	for (int i = 0; i < heightWithBorder; i++)

@@ -151,15 +151,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Checkpoint.cpp" />
+    <ClCompile Include="connector.cpp" />
     <ClCompile Include="GameFieldManager.cpp" />
     <ClCompile Include="Generator.cpp" />
     <ClCompile Include="SFML_TETRIS.cpp" />
     <ClCompile Include="Tetromino.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Checkpoint.h" />
+    <ClInclude Include="connector.h" />
     <ClInclude Include="GameFieldManager.h" />
     <ClInclude Include="Generator.h" />
-    <ClInclude Include="Structures.h" />
+    <ClInclude Include="Point.h" />
     <ClInclude Include="Tetromino.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

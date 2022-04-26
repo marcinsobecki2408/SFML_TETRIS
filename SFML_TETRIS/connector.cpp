@@ -3,11 +3,22 @@
 #ifdef _WIN32 || _WIN64
 
 connector::connector(string name) {
+    // TODO: Fix connectors
+    for (int i = 0; i < name.length(); i++)
+    {
+        if (name[i] == '/')
+            name[i] = '\\';
+    }
+    name.insert(0, "\\\\.");
+    std::wstring nameW = std::wstring(begin(name), end(name));
+    LPCWSTR wideName = nameW.c_str();
     // "\\\\.\\pipe\\TetrisPipe"
-    hPipe = CreateNamedPipe(TEXT(name),
+    // "\\\\.\\tmp\\biai_input"
+
+    hPipe = CreateNamedPipe(wideName,
                             PIPE_ACCESS_DUPLEX,
                             PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
-                            1,
+                            2,
                             BUF_SIZE * 16,
                             BUF_SIZE * 16,
                             NMPWAIT_USE_DEFAULT_WAIT,
@@ -25,30 +36,35 @@ connector::~connector() {
 }
 
 string connector::read() {
-    if (FALSE == PeekNamedPipe(hPipe,
-                               0,
-                               0,
-                               0,
-                               &total_available_bytes,
-                               0))
-    {
-        // Handle failure. (Me)
-    }
-        // If there is some data, read it
-    else if (total_available_bytes > 0)
-    {
+    //if (FALSE == PeekNamedPipe(hPipe,
+    //                           0,
+    //                           0,
+    //                           0,
+    //                           &totalAvailableBytes,
+    //                           0))
+    //{
+    //    // Handle failure. (Me)
+    //}
+    //    // If there is some data, read it
+    //else if (totalAvailableBytes > 0)
+    //{
         if (ReadFile(hPipe, buffer, sizeof(buffer) - 1, &dwRead, NULL) != FALSE)
         {
             recievedMessage = std::string(buffer);
             if (recievedMessage.size() > 1)
                 recievedMessage.pop_back();
         }
-    }
+    //}
     return recievedMessage;
 }
 
 void connector::write(char* buf, int size) {
     // todo
+    WriteFile(hPipe,
+        buf,
+        size + 1,   // = length of string + terminating '\0' !!!
+        &dwWritten,
+        NULL);
 }
 
 void connector::clear() {
