@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 					border.setPosition(i * 19, (j - 4) * 19);
 					window.draw(border);
 				}
-				if (gameField[widthWithBorder * j + i] >= 0 && gameField[widthWithBorder * j + i] <= 6)
+				else if (gameField[widthWithBorder * j + i] >= 0 && gameField[widthWithBorder * j + i] <= 6)
 				{
 					blockSprite.setPosition(i * 19, (j - 4) * 19);
 					blockSprite.setTextureRect(IntRect(gameField[widthWithBorder * j + i] * 19, 0, 19, 19));
@@ -227,14 +227,12 @@ int main(int argc, char* argv[])
 						tetromino->rotate();
 						rotate = false;
 					}
-
-					if (moveLeft)
+					else if (moveLeft)
 					{
 						tetromino->moveLeft();
 						moveLeft = false;
 					}
-
-					if (moveRight)
+					else if (moveRight)
 					{
 						tetromino->moveRight();
 						moveRight = false;
