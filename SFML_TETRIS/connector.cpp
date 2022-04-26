@@ -2,8 +2,9 @@
 
 #ifdef _WIN32 || _WIN64
 
-connector::connector() {
-    hPipe = CreateNamedPipe(TEXT("\\\\.\\pipe\\TetrisPipe"),
+connector::connector(string name) {
+    // "\\\\.\\pipe\\TetrisPipe"
+    hPipe = CreateNamedPipe(TEXT(name),
                             PIPE_ACCESS_DUPLEX,
                             PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,   // FILE_FLAG_FIRST_PIPE_INSTANCE is not needed but forces CreateNamedPipe(..) to fail if the pipe already exists...
                             1,
@@ -46,7 +47,7 @@ string connector::read() {
     return recievedMessage;
 }
 
-void connector::write(string std) {
+void connector::write(char* buf, int size) {
     // todo
 }
 
