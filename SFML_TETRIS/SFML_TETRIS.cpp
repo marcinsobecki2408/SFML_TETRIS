@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Window render
-	RenderWindow window(VideoMode(550, 21 * 19), "Tetris Marcinka");
+	RenderWindow window(VideoMode(550, 21 * 19), "Tetris Game");
 
 	// Loading textures of the blocks
 	Texture blockTexture;
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 
     connector* inCon = nullptr;
     connector* outCon = nullptr;
-    string msg;
+	string msg;
     if (usePipes) {
         inCon = new connector("/tmp/biai_input");
         outCon = new connector("/tmp/biai_output");
@@ -129,14 +129,17 @@ int main(int argc, char* argv[])
 	Event event;
 	while (window.isOpen())
 	{
-		if (usePipes)
+		if (usePipes && msg.empty())	// steering string is empty - it has been consumed OR the game is just beginning
 		{
             gameFieldManager.createGameFieldExport(gameStateExport);
             gameStateExport[GSE_SIZE - 2] = (char) tetromino->getCurrentTetrominoIndex();
             gameStateExport[GSE_SIZE - 1] = (char) nextTetromino->getCurrentTetrominoIndex();
             outCon->write(gameStateExport, GSE_SIZE);
 
-            msg = inCon->read();
+			while (msg.empty())	// wait for responce from AI - might be faulty
+			{
+				msg = inCon->read();
+			}
 		}
 			
 		// Time mesurement
@@ -213,23 +216,23 @@ int main(int argc, char* argv[])
 
 		if (!msg.empty())
 		{
-			if (msg == "w")
+			char currentAction = msg.front();
+			switch (currentAction)
 			{
-				rotate = true;
+				case 'w':
+					rotate = true;
+					break;
+				case 'a':
+					moveLeft = true;
+					break;
+				case 'd':
+					moveRight = true;
+					break;
+				case 'q':
+					hardDrop = true;
+					break;
 			}
-			else if (msg == "a")
-			{
-				moveLeft = true;
-			}
-			else if (msg == "d")
-			{
-				moveRight = true;
-			}
-			else if (msg == "q")
-			{
-				hardDrop = true;
-			}
-            msg.clear();
+            msg.erase(0, 1);
 		}
 
 		// Game logic based on flags set
