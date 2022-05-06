@@ -231,6 +231,12 @@ int main(int argc, char* argv[])
 				case 'q':
 					hardDrop = true;
 					break;
+                case 'c':
+                    makeCheckpoint = true;
+                    break;
+                case 'v':
+                    restoreCheckpoint = true;
+                    break;
 			}
             msg.erase(0, 1);
 		}

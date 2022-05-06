@@ -11,9 +11,10 @@ add_executable(SFML_TETRIS
     Generator.cpp
     Generator.h
     SFML_TETRIS.cpp
-    Structures.h
     Tetromino.cpp
     Tetromino.h
+    Checkpoint.cpp
+    Checkpoint.h
     connector.cpp
     connector.h)
 
