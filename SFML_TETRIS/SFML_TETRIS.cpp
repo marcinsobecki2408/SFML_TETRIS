@@ -7,6 +7,8 @@
 #include "GameFieldManager.h"
 #include "connector.h"
 #include "Checkpoint.h"
+#include <sstream>
+#include <iomanip>
 
 using namespace sf;
 
@@ -18,8 +20,9 @@ int main(int argc, char* argv[])
 	// Initialization
 	const int heightWithBorder = 25;
 	const int widthWithBorder = 12;
-	int currentPoints = 0;
-	int linesCleared = 0;
+	int currentPoints = 0,
+		linesCleared = 0,
+		pipeIndex = 1;
 	Point* offset = new Point{ 4, 0 };
 	Point nextPieceWindow = { 14 * 19 + 4, 5 * 19 + 4 };
 
@@ -49,20 +52,21 @@ int main(int argc, char* argv[])
 		gameOver = false,
 		pauseGame = false,
 		resetGame = false,
-		turboModeOn = false,
 		usePipes = false,
 		makeCheckpoint = false,
 		restoreCheckpoint = false;
 
 	// Parameter handling
 	std::vector<string> args(argv, argv + argc);
-	if (std::find(begin(args), end(args), "t") != end(args))
-	{
-		turboModeOn = true;
-	}
 	if (std::find(begin(args), end(args), "p") != end(args))
 	{
 		usePipes = true;
+		auto pArgIterator = std::find(begin(args), end(args), "p");
+		if (pArgIterator + 1 != end(args))
+		{
+			string value = *(pArgIterator + 1);
+			pipeIndex = stoi(value);
+		}
 	}
 
 	// Window render
@@ -113,16 +117,22 @@ int main(int argc, char* argv[])
 
     connector* inCon = nullptr;
     connector* outCon = nullptr;
-	string msg;
+	string msg, scoreString;
+	std::stringstream ss;
+
     if (usePipes) {
-        inCon = new connector("/tmp/biai_input");
-        outCon = new connector("/tmp/biai_output");
+		string inConName = "/tmp/biai_input_";
+		inConName.append(std::to_string(pipeIndex));
+        inCon = new connector(inConName);	// if does not work, add ".c_str()"
+		string outConName = "/tmp/biai_output";
+		outConName.append(std::to_string(pipeIndex));
+        outCon = new connector(outConName);
         inCon->clear();
         outCon->clear();
     }
 
-    // [gameField..., currentPiece, nextPiece]
-    const int GSE_SIZE = 10*24+2;
+    // [gameField..., currentPiece, nextPiece, score, gameOver]
+    const int GSE_SIZE = 10 * 24 + 2 + 10 + 1;
     char gameStateExport[GSE_SIZE];
 
 	// Main loop of the program
@@ -132,8 +142,17 @@ int main(int argc, char* argv[])
 		if (usePipes && msg.empty())	// steering string is empty - it has been consumed OR the game is just beginning
 		{
             gameFieldManager.createGameFieldExport(gameStateExport);
-            gameStateExport[GSE_SIZE - 2] = (char) tetromino->getCurrentTetrominoIndex();
-            gameStateExport[GSE_SIZE - 1] = (char) nextTetromino->getCurrentTetrominoIndex();
+            gameStateExport[GSE_SIZE - 13] = (char) tetromino->getCurrentTetrominoIndex();
+            gameStateExport[GSE_SIZE - 12] = (char) nextTetromino->getCurrentTetrominoIndex();
+			
+			ss << std::setw(10) << std::setfill('0') << currentPoints;
+			scoreString = ss.str();
+			ss.clear();
+			for (int i = 0; i < 10; i++)
+			{
+				gameStateExport[GSE_SIZE - 11 + i] = scoreString[i] - 48;
+			}
+			gameOver ? gameStateExport[GSE_SIZE - 1] = 'Y' : gameStateExport[GSE_SIZE - 1] = 'N';
             outCon->write(gameStateExport, GSE_SIZE);
 
 			while (msg.empty())	// wait for responce from AI - might be faulty
@@ -200,9 +219,6 @@ int main(int argc, char* argv[])
 					moveLeft = false;
 					moveRight = false;
 					hardDrop = false;
-					break;
-				case Keyboard::T:
-					turboModeOn = !turboModeOn;
 					break;
 				case Keyboard::C:
 					makeCheckpoint = true;
@@ -274,9 +290,7 @@ int main(int argc, char* argv[])
 						restoreCheckpoint = false;
 					}
 
-					if (Keyboard::isKeyPressed(Keyboard::Down) && turboModeOn)
-						timestep = 0.002;
-					else if (Keyboard::isKeyPressed(Keyboard::Down) && !turboModeOn)
+					if (Keyboard::isKeyPressed(Keyboard::Down))
 						timestep = 0.05;
 					else
 						timestep = 0.3;
@@ -357,8 +371,7 @@ int main(int argc, char* argv[])
 		// Display current score and instructions
 		scoreLabel.setString("Score: " + std::to_string(currentPoints));
 		window.draw(scoreLabel);
-		String turboModeLabel = turboModeOn ? String("ON") : String("OFF");
-		controlsLabels.setString("R - Restart\nP - Pause\nTurbo Mode: " + turboModeLabel);
+		controlsLabels.setString("R - Restart\nP - Pause");
 		window.draw(controlsLabels);
 
 		// Drawing window where next piece is displayed
