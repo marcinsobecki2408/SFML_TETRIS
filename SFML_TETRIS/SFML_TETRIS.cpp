@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
 	const int widthWithBorder = 12;
 	int currentPoints = 0,
 		linesCleared = 0,
-		pipeIndex = 1;
+		pipeIndex = -2;
 	Point* offset = new Point{ 4, 0 };
 	Point nextPieceWindow = { 14 * 19 + 4, 5 * 19 + 4 };
 
@@ -54,10 +54,11 @@ int main(int argc, char* argv[])
 		resetGame = false,
 		usePipes = false,
 		makeCheckpoint = false,
-		restoreCheckpoint = false;
+		restoreCheckpoint = false,
+        dontDraw = false;
 
 	// Parameter handling
-	std::vector<string> args(argv, argv + argc);
+	std::vector<std::string> args(argv, argv + argc);
 	if (std::find(begin(args), end(args), "p") != end(args))
 	{
 		usePipes = true;
@@ -70,7 +71,19 @@ int main(int argc, char* argv[])
 	}
 
 	// Window render
-	RenderWindow window(VideoMode(550, 21 * 19), "Tetris Game");
+    const int W_WIDTH = 550;
+    const int W_HEIGHT = 21 * 19;
+	RenderWindow window(VideoMode(W_WIDTH, W_HEIGHT), "Tetris Game");
+
+    if(pipeIndex >= 0) {
+        window.setTitle("Tetris Game - " + std::to_string(pipeIndex));
+        sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+        int horizontal = desktop.width / W_WIDTH;
+        int vertical = desktop.height / W_HEIGHT;
+        int x = pipeIndex % horizontal;
+        int y = pipeIndex % vertical;
+        window.setPosition(sf::Vector2i(x * W_WIDTH, y * W_HEIGHT));
+    }
 
 	// Loading textures of the blocks
 	Texture blockTexture;
@@ -97,7 +110,7 @@ int main(int argc, char* argv[])
 	if (!font.loadFromFile("Fonts/arial.ttf"))
 	{
 		cout << "Cannot read font" << endl;
-#ifdef _WIN32 || _WIN64
+#ifdef _WIN32
 		system("pause");
 #endif
         return 1;
@@ -124,7 +137,7 @@ int main(int argc, char* argv[])
 		string inConName = "/tmp/biai_input_";
 		inConName.append(std::to_string(pipeIndex));
         inCon = new connector(inConName);	// if does not work, add ".c_str()"
-		string outConName = "/tmp/biai_output";
+		string outConName = "/tmp/biai_output_";
 		outConName.append(std::to_string(pipeIndex));
         outCon = new connector(outConName);
         inCon->clear();
@@ -144,15 +157,15 @@ int main(int argc, char* argv[])
             gameFieldManager.createGameFieldExport(gameStateExport);
             gameStateExport[GSE_SIZE - 13] = (char) tetromino->getCurrentTetrominoIndex();
             gameStateExport[GSE_SIZE - 12] = (char) nextTetromino->getCurrentTetrominoIndex();
-			
+
+            ss.str("");
 			ss << std::setw(10) << std::setfill('0') << currentPoints;
 			scoreString = ss.str();
-			ss.clear();
 			for (int i = 0; i < 10; i++)
 			{
-				gameStateExport[GSE_SIZE - 11 + i] = scoreString[i] - 48;
+				gameStateExport[GSE_SIZE - 11 + i] = scoreString[i];
 			}
-			gameOver ? gameStateExport[GSE_SIZE - 1] = 'Y' : gameStateExport[GSE_SIZE - 1] = 'N';
+			gameStateExport[GSE_SIZE - 1] = gameOver ? 'N' : 'Y';
             outCon->write(gameStateExport, GSE_SIZE);
 
 			while (msg.empty())	// wait for responce from AI - might be faulty
@@ -253,6 +266,17 @@ int main(int argc, char* argv[])
                 case 'v':
                     restoreCheckpoint = true;
                     break;
+                case 'r':
+                    resetGame = true;
+                    break;
+                case '[':
+                    dontDraw = true;
+                    break;
+                case ']':
+                    dontDraw = false;
+                    break;
+                default:
+                    cout << "key '" << currentAction << "' not recognized" << endl;
 			}
             msg.erase(0, 1);
 		}
@@ -368,6 +392,9 @@ int main(int argc, char* argv[])
 			textGameOver.setString("Game over!\nPress R to \nstart again");
 			window.draw(textGameOver);
 		}
+
+        if(dontDraw) continue;
+
 		// Display current score and instructions
 		scoreLabel.setString("Score: " + std::to_string(currentPoints));
 		window.draw(scoreLabel);

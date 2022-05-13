@@ -6,7 +6,7 @@ using std::string;
 
 #define BUF_SIZE 300
 
-#ifdef _WIN32 || _WIN64
+#ifdef _WIN32
 
 #include <windows.h>
 #include <stdio.h>
