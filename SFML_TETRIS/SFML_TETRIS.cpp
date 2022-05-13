@@ -128,20 +128,18 @@ int main(int argc, char* argv[])
 	controlsLabels.setCharacterSize(24);
 	controlsLabels.setFillColor(Color::Black);
 
-    connector* inCon = nullptr;
-    connector* outCon = nullptr;
+    innector* inCon = nullptr;
+    outnector* outCon = nullptr;
 	string msg, scoreString;
 	std::stringstream ss;
 
     if (usePipes) {
 		string inConName = "/tmp/biai_input_";
 		inConName.append(std::to_string(pipeIndex));
-        inCon = new connector(inConName);	// if does not work, add ".c_str()"
+        inCon = new innector(inConName);	// if does not work, add ".c_str()"
 		string outConName = "/tmp/biai_output_";
 		outConName.append(std::to_string(pipeIndex));
-        outCon = new connector(outConName);
-        inCon->clear();
-        outCon->clear();
+        outCon = new outnector(outConName);
     }
 
     // [gameField..., currentPiece, nextPiece, score, gameOver]
@@ -168,10 +166,10 @@ int main(int argc, char* argv[])
 			gameStateExport[GSE_SIZE - 1] = gameOver ? 'N' : 'Y';
             outCon->write(gameStateExport, GSE_SIZE);
 
-			while (msg.empty())	// wait for responce from AI - might be faulty
-			{
+//			while (msg.empty())	// wait for responce from AI - might be faulty
+//			{ // edit: never had to repeat after some changes
 				msg = inCon->read();
-			}
+//			}
 		}
 			
 		// Time mesurement

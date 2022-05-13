@@ -45,16 +45,29 @@ public:
 #include <fstream>
 
 class connector {
+public:
     char buffer[BUF_SIZE];
     string name;
     FILE *pipe;
 
-public:
-    explicit connector(string name);
+    connector(string name);
     ~connector();
+};
+
+class innector : public connector {
+    std::ifstream in;
+public:
+    innector(string name) : connector(name), in(name, std::ios::in) {};
+    ~innector();
     string read();
+};
+
+class outnector : public connector {
+    std::ofstream out;
+public:
+    outnector(string name) : connector(name), out(name, std::ios::out) {}
+    ~outnector();
     void write(char* buf, int size);
-    void clear();
 };
 
 #endif

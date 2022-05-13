@@ -82,32 +82,24 @@ connector::~connector() {
     unlink(name.c_str());
 }
 
-string connector::read() {
+string innector::read() {
     string str;
-    std::ifstream in(name, std::ios::in);
     std::getline(in, str);
-    in.close();
     return str;
 }
 
-void connector::write(char* buf, int size) {
-    std::ofstream out(name, std::ios::out);
-    out.write(buf, size);
-    out.close();
+innector::~innector() {
+    in.close();
 }
 
-void connector::clear() { // maybe there is a better way
-    return;
-    std::ifstream in(name, std::ios::in);
-    in.seekg(0, std::ifstream::end);
-    long length = in.tellg();
-    std::cout << length << std::endl;
-    if (length > 0) {
-        string str;
-        std::getline(in, str);
-    }
-    in.seekg(0, std::ifstream::beg);
-    in.close();
+void outnector::write(char* buf, int size) {
+    out.write(buf, size);
+    out << std::endl;
+//    out.flush();
+}
+
+outnector::~outnector() {
+    out.close();
 }
 
 #endif
