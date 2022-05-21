@@ -55,7 +55,9 @@ int main(int argc, char* argv[])
 		usePipes = false,
 		makeCheckpoint = false,
 		restoreCheckpoint = false,
-        dontDraw = false;
+        dontDraw = false,
+		displayModeOn = false,
+		displayModeDrawingFall = false;
 
 	// Parameter handling
 	std::vector<std::string> args(argv, argv + argc);
@@ -68,6 +70,10 @@ int main(int argc, char* argv[])
 			string value = *(pArgIterator + 1);
 			pipeIndex = stoi(value);
 		}
+	}
+	if (std::find(begin(args), end(args), "d") != end(args))
+	{
+		displayModeOn = true;
 	}
 
 	// Window render
@@ -150,7 +156,7 @@ int main(int argc, char* argv[])
 	Event event;
 	while (window.isOpen())
 	{
-		if (usePipes && msg.empty())	// steering string is empty - it has been consumed OR the game is just beginning
+		if (usePipes && msg.empty() && !displayModeDrawingFall)	// steering string is empty - it has been consumed OR the game is just beginning
 		{
             gameFieldManager.createGameFieldExport(gameStateExport);
             gameStateExport[GSE_SIZE - 13] = (char) tetromino->getCurrentTetrominoIndex();
@@ -223,6 +229,8 @@ int main(int argc, char* argv[])
 					break;
 				case Keyboard::Q:
 					hardDrop = true;
+					if (displayModeOn)
+						displayModeDrawingFall = true;
 					break;
 				case Keyboard::P:
 					pauseGame = !pauseGame;
@@ -236,6 +244,9 @@ int main(int argc, char* argv[])
 					break;
 				case Keyboard::V:
 					restoreCheckpoint = true;
+					break;
+				case Keyboard::O:
+					displayModeOn = !displayModeOn;
 					break;
 				}
 			}
@@ -257,6 +268,8 @@ int main(int argc, char* argv[])
 					break;
 				case 'q':
 					hardDrop = true;
+					if (displayModeOn && !dontDraw)
+						displayModeDrawingFall = true;
 					break;
                 case 'c':
                     makeCheckpoint = true;
@@ -272,7 +285,7 @@ int main(int argc, char* argv[])
                     break;
                 case ']':
                     dontDraw = false;
-                    break;
+					break;
                 default:
                     cout << "key '" << currentAction << "' not recognized" << endl;
 			}
@@ -314,18 +327,62 @@ int main(int argc, char* argv[])
 
 					if (Keyboard::isKeyPressed(Keyboard::Down))
 						timestep = 0.05;
+					else if (displayModeDrawingFall)
+					{
+						timestep = 0.01;
+					}
 					else
 						timestep = 0.3;
 
-					if (timer > timestep || usePipes)
 					{
-						bool collisionOccured;
-						do
+						bool collisionOccured = false;
+						if (usePipes)	// for pipes & AI
 						{
-							collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
-							if (collisionOccured)
-								hardDrop = false;
-						} while (hardDrop);
+							if (!dontDraw && displayModeOn && hardDrop)	// if AI draws result & display mode is on & hard drop is pressed
+							{
+								if(timer > timestep)	// decrease timestep to 0.01s and wait for the collision to occur
+								{
+									collisionOccured = !tetromino->moveDown();
+									if (collisionOccured)
+									{
+										displayModeDrawingFall = false;
+										hardDrop = false;
+									}
+									timer = 0;
+								}
+							}
+							else	// else do instant hard drop without animation of falling down (e.g. in learing process)
+							{
+								do
+								{
+									collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
+									if (collisionOccured)
+										hardDrop = false;
+								} while (hardDrop);
+							}
+						}
+						else if (timer > timestep)	// for people
+						{
+							if(displayModeOn && hardDrop)	// if person turned on display mode & hard drop was pressed
+							{
+								collisionOccured = !tetromino->moveDown();	// decrease timestep to 0.01s and wait for the collision to occur
+								if (collisionOccured)
+								{
+									displayModeDrawingFall = false;
+									hardDrop = false;
+								}
+							}
+							else	// else do instant hard drop
+							{
+								do
+								{
+									collisionOccured = !tetromino->moveDown();	// Method returns true if piece is successfully moved down
+									if (collisionOccured)
+										hardDrop = false;
+								} while (hardDrop);
+							}
+							timer = 0;
+						}
 
 						if (collisionOccured)
 						{
@@ -335,7 +392,6 @@ int main(int argc, char* argv[])
 							// Checking for completed lines
 							linesCleared = gameFieldManager.checkForFullLines();
 						}
-						timer = 0;
 					}
 
 					if (gameFieldManager.checkIfGameOver())
